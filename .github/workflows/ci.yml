@@ -36,7 +36,11 @@ jobs:
           cache: maven
 
       - name: Build
-        run: mvn -B -ntp clean package
+        run: >-
+          mvn -B -ntp -T 1C
+          -Dmaven.javadoc.skip=true
+          -Dmaven.source.skip=true
+          clean package
 
       - name: Upload application JARs
         uses: actions/upload-artifact@v4
