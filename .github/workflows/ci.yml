@@ -15,7 +15,7 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -127,3 +127,40 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha,scope=${{ matrix.image }}
           cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+
+  deploy:
+    name: Deploy to server
+    runs-on: [prod]
+    needs: docker
+    if: github.event_name != 'pull_request'
+    timeout-minutes: 15
+    env:
+      DEPLOY_DIR: /opt/deploy/smart-plat
+    steps:
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Pull and restart application containers
+        shell: bash
+        working-directory: ${{ env.DEPLOY_DIR }}
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+        run: |
+          export IMAGE_TAG="sha-${GITHUB_SHA::7}"
+          docker compose pull
+          docker compose up -d --remove-orphans
+
+          for image in smart-auth smart-data smart-document; do
+            repo="${DOCKERHUB_USERNAME}/${image}"
+            docker image ls "$repo" --format '{{.Repository}}:{{.Tag}}' \
+              | grep -E ':sha-[0-9a-fA-F]+$' \
+              | grep -vxF "$repo:${IMAGE_TAG}" \
+              | while IFS= read -r ref; do
+                  docker image rm "$ref" || true
+                done || true
+          done
+
+          docker image prune -f

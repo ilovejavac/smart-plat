@@ -1,0 +1,18 @@
+spring:
+  config:
+    import: optional:nacos:${spring.application.name}.yaml
+  datasource:
+    url: jdbc:postgresql://pgsql:5432/smart-plat?currentSchema=framework&stringtype=unspecified&reWriteBatchedInserts=true
+  cloud:
+    nacos:
+      config:
+        server-addr: ${app.cloud.host}:${app.cloud.port}
+        group: ${app.cloud.group}
+        namespace: ${app.cloud.namespace}
+        username: ${app.cloud.username}
+        password: ${app.cloud.password}
+
+app:
+  cloud:
+    host: nacos
+    group: PROD

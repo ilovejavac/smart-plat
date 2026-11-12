@@ -1,0 +1,44 @@
+name: smart-plat-app
+
+x-app-defaults: &app-defaults
+  restart: unless-stopped
+  networks:
+    - infra
+
+x-app-environment: &app-environment
+  TZ: Asia/Shanghai
+  SPRING_PROFILES_ACTIVE: prod
+  SERVER_PORT: "8080"
+
+services:
+  smart-auth:
+    <<: *app-defaults
+    image: ${DOCKERHUB_USERNAME:?DOCKERHUB_USERNAME is required}/smart-auth:${IMAGE_TAG:-latest}
+    container_name: smart-auth
+    environment:
+      <<: *app-environment
+    ports:
+      - "${AUTH_HTTP_PORT:-18081}:8080"
+
+  smart-data:
+    <<: *app-defaults
+    image: ${DOCKERHUB_USERNAME:?DOCKERHUB_USERNAME is required}/smart-data:${IMAGE_TAG:-latest}
+    container_name: smart-data
+    environment:
+      <<: *app-environment
+    ports:
+      - "${DATA_HTTP_PORT:-28080}:8080"
+
+  smart-document:
+    <<: *app-defaults
+    image: ${DOCKERHUB_USERNAME:?DOCKERHUB_USERNAME is required}/smart-document:${IMAGE_TAG:-latest}
+    container_name: smart-document
+    environment:
+      <<: *app-environment
+    ports:
+      - "${DOCUMENT_HTTP_PORT:-18082}:8080"
+
+networks:
+  infra:
+    external: true
+    name: infra

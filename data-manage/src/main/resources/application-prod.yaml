@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://pgsql:5432/smart-plat?currentSchema=framework&stringtype=unspecified&reWriteBatchedInserts=true
+
+app:
+  storage:
+    rustfs:
+      endpoint: http://rustfs:9000
+    public-endpoint: http://10.10.24.244:8080
