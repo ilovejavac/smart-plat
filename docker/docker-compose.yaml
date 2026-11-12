@@ -1,0 +1,142 @@
+version: '3.8'
+services:
+  etcd:
+    image: quay.io/coreos/etcd:v3.5.18
+    container_name: etcd
+    restart: unless-stopped
+    ports:
+      - "2379:2379"
+      - "2380:2380"
+    volumes:
+      - ./etcd-data:/etcd-data
+    environment:
+      - ETCD_NAME=etcd-node
+      - ETCD_DATA_DIR=/etcd-data
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379          # 【修正】绝不能写 0.0.0.0，必须写容器名 etcd
+      - ETCD_LISTEN_PEER_URLS=http://0.0.0.0:2380
+      - ETCD_INITIAL_ADVERTISE_PEER_URLS=http://etcd:2380    # 【修正】绝不能写 0.0.0.0
+      - ETCD_INITIAL_CLUSTER=etcd-node=http://etcd:2380      # 【修正】绝不能写 0.0.0.0
+      - ETCD_INITIAL_CLUSTER_STATE=new
+      - ETCD_INITIAL_CLUSTER_TOKEN=etcd-cluster
+      - ETCD_AUTO_COMPACTION_RETENTION=1
+      - ETCD_QUOTA_BACKEND_BYTES=2147483648
+      - ETCD_ALLOW_NONE_AUTHENTICATION=true
+    networks:
+      - infra
+
+  apisix:
+    image: apache/apisix:3.11.0-debian
+    container_name: apisix-gateway
+    restart: always
+    volumes:
+      - ./apisix_conf/config.yaml:/usr/local/apisix/conf/config.yaml:ro
+    depends_on:
+      - etcd
+    ports:
+      - "9080:9080" # HTTP 流量端口
+      - "9443:9443" # HTTPS 流量端口
+      - "9180:9180" # Admin API 端口
+    networks:
+      - infra
+
+  dashboard:
+    image: apache/apisix-dashboard:3.0.1-alpine
+    container_name: apisix-dashboard
+    restart: always
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./dashboard_conf/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml:ro
+    depends_on:
+      - etcd
+    networks:
+      - infra
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+    depends_on:
+      - rustfs
+    networks:
+      - infra
+  rustfs:
+    image: rustfs/rustfs:1.0.4
+    restart: unless-stopped
+    ports:
+      - "9001:9001"
+    environment:
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY:-admin}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY:-1qazXDR%}
+      RUSTFS_REGION: ${RUSTFS_REGION:-cn-shanghai}
+    #      RUSTFS_SERVER_DOMAINS: ${RUSTFS_SERVER_DOMAINS:-s3.example.com}
+    volumes:
+      - ./data/rustfs:/data
+    networks:
+      - infra
+  pgsql:
+    image: postgis/postgis:18-3.6
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-root}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-1qazXDR%}
+    ports:
+      - "15432:5432"
+    volumes:
+      - ./data/pgsql:/var/lib/postgresql
+    networks:
+      - infra
+  opensearch:
+    image: opensearchproject/opensearch:3.4.0
+    restart: unless-stopped
+    environment:
+      - discovery.type=single-node
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=Ware1qazXDR%4u
+      - plugins.security.disabled=true  # 关闭安全插件
+    ports:
+      - "19200:9200"
+      - "19600:9600"
+    volumes:
+      - ./data/opensearch:/usr/share/opensearch/data
+    networks:
+      - infra
+  redis:
+    image: bitnami/redis:latest
+    restart: unless-stopped
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-1qazXDR%}
+    ports:
+      - "16379:6379"
+    volumes:
+      - ./data/redis:/bitnami/redis/data
+    networks:
+      - infra
+  nacos:
+    image: nacos/nacos-server:v3.3.0
+    restart: unless-stopped
+    environment:
+      MODE: standalone
+      NACOS_AUTH_TOKEN: ${NACOS_AUTH_TOKEN:-VGhpc0lzTXlDdXN0b21TZWNyZXRLZXkwMTIzNDU2Nzg=}
+      NACOS_AUTH_IDENTITY_KEY: ${NACOS_AUTH_IDENTITY_KEY:-serverIdentity}
+      NACOS_AUTH_IDENTITY_VALUE: ${NACOS_AUTH_IDENTITY_VALUE:-security}
+    ports:
+      - "18080:8080"
+      - "8848:8848"
+      - "9848:9848"
+      - "9849:9849"
+    volumes:
+      - ./data/nacos:/home/nacos/data
+      - ./logs/nacos:/home/nacos/logs
+    networks:
+      - infra
+networks:
+  infra:
+    name: infra
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.244.0/24

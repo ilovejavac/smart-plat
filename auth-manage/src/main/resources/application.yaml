@@ -1,0 +1,46 @@
+spring:
+  application:
+    name: smart-auth
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://10.10.24.244:15432/smart-plat?currentSchema=framework&stringtype=unspecified&reWriteBatchedInserts=true
+    username: usr_8722
+    password: JonmGzp767fL
+  jpa:
+    hibernate:
+      ddl-auto: update
+  cloud:
+    nacos:
+      config:
+        server-addr: ${app.cloud.host}:${app.cloud.port}
+        group: ${app.cloud.group}
+        namespace: ${app.cloud.namespace}
+        username: ${app.cloud.username}
+        password: ${app.cloud.password}
+  profiles:
+    active:
+      - dev
+
+server:
+  port: 18081
+  servlet:
+    context-path: /auth
+
+app:
+  dubbo:
+    scan-packages: com.ware4u
+  security:
+    jwt:
+      secret: 8O/BBGQQ+s1Nl2CInOi+WoWbf7YOjOLAXHoDK9SCK20=
+    aes:
+      secret: p//piZoSjBmC2xfVGZu3Aj/SwcPDLmbvvGgHC4Pyf9U=
+  cloud:
+    namespace: 5d6e4d22-d366-4633-9bfb-cfbe909d3717
+    host: 10.10.24.244
+    port: 8848
+    group: DEV
+    username: nacos
+    password: nacos
+  dialect: postgresql
+  snow-flake:
+    worker-id: 1
