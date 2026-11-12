@@ -1,4 +1,12 @@
 spring:
+  cloud:
+    nacos:
+      config:
+        server-addr: ${app.cloud.host}:${app.cloud.port}
+        group: ${app.cloud.group}
+        namespace: ${app.cloud.namespace}
+        username: ${app.cloud.username}
+        password: ${app.cloud.password}
   application:
     name: smart-data
   datasource:
@@ -19,6 +27,15 @@ server:
     context-path: /data
 
 app:
+  dubbo:
+    scan-packages: com.ware4u
+  cloud:
+    namespace: 5d6e4d22-d366-4633-9bfb-cfbe909d3717
+    host: 10.10.24.244
+    port: 8848
+    group: DEV
+    username: nacos
+    password: nacos
   storage:
     rustfs:
       access-key: pZ5uFRQnqyK6WfkUci5f
