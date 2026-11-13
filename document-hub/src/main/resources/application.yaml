@@ -27,6 +27,13 @@ server:
     context-path: /document
 
 app:
+  storage:
+    rustfs:
+      access-key: pZ5uFRQnqyK6WfkUci5f
+      secret-key: n2b5R7njMYedLvCriLXfdGTs3IFOxCTPLdcS2okJ
+      region: cn-shanghai
+      bucket: smart-plat
+      endpoint: http://10.10.24.244:8080
   dubbo:
     scan-packages: com.ware4u
   security:

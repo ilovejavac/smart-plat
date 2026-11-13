@@ -1,0 +1,19 @@
+< {%
+    request.variables.set("refrence", Date.now());
+%}
+POST http://127.0.0.1:18082/document/api/skills?refrence={{refrence}}
+Content-Type: application/json
+
+{
+  "name": "test skill name",
+  "description": "test skill description"
+}
+
+> {%
+    client.log("created skillId: " + response.body.data);
+    client.global.set("skillId", response.body.data);
+%}
+
+###
+DELETE {{document}}/api/skills/{{skillId}}
+Content-Type: application/json

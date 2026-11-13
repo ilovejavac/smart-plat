@@ -16,3 +16,7 @@ app:
   cloud:
     host: nacos
     group: PROD
+  storage:
+    rustfs:
+      endpoint: http://rustfs:9000
+    public-endpoint: http://10.10.24.244:8080
